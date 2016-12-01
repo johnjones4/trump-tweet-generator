@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const MaxBaseSize = 4;
 
-module.exports = function(done) {
+exports.seed = function(done) {
   async.waterfall([
     function(next) {
       fs.createReadStream('./tweets.csv').pipe(parse({'columns': true},next));
@@ -15,25 +15,33 @@ module.exports = function(done) {
         const baseTokens = getTweetTokens(tweet);
         generateBiGrams(baseTokens,words);
       });
+      sortNextWorks(words);
       next(null,words);
     },
-    function(biGrams,next) {
-      for(var biGram in biGrams) {
-        const nextArray = [];
-        for(var nextWord in biGrams[biGram]) {
-          nextArray.push({
-            'word': nextWord,
-            'frequency': biGrams[biGram][nextWord]
-          });
-        }
-        nextArray.sort(function(a,b) {
-          return b.frequency - a.frequency;
-        });
-        biGrams[biGram] = nextArray;
-      }
-      next(null,biGrams);
-    }
   ],done);
+}
+
+exports.generate = function(base,biGrams,done) {
+  var tweet = base.toLowerCase();
+  var lastWord = base.toLowerCase();
+  const wordsUsed = {};
+  while(tweet.length < 140) {
+    if (biGrams[lastWord]) {
+      // if (!wordsUsed[lastWord] && !Number.isInteger(wordsUsed[lastWord])) {
+      //   wordsUsed[lastWord] = 0;
+      // } else {
+      //   wordsUsed[lastWord]++;
+      // }
+      // const index = (wordsUsed[lastWord] % biGrams[lastWord].length);
+      const index = Math.floor(Math.random() * biGrams[lastWord].length);
+      const nextWord = biGrams[lastWord][index].word;
+      tweet += ' ' + nextWord;
+      lastWord = nextWord;
+    } else {
+      break;
+    }
+  }
+  done(null,tweet);
 }
 
 function getTweetTokens(tweet) {
@@ -66,5 +74,21 @@ function generateBiGrams(tokens,words) {
         }
       }
     }
+  }
+}
+
+function sortNextWorks(biGrams) {
+  for(var biGram in biGrams) {
+    const nextArray = [];
+    for(var nextWord in biGrams[biGram]) {
+      nextArray.push({
+        'word': nextWord,
+        'frequency': biGrams[biGram][nextWord]
+      });
+    }
+    nextArray.sort(function(a,b) {
+      return b.frequency - a.frequency;
+    });
+    biGrams[biGram] = nextArray;
   }
 }
