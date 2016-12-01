@@ -1,0 +1,25 @@
+{
+  "name": "trump-tweet-generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "async": "^2.1.4",
+    "csv-parse": "^1.1.7",
+    "csv-parser": "^1.11.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnjones4/trump-tweet-generator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/johnjones4/trump-tweet-generator/issues"
+  },
+  "homepage": "https://github.com/johnjones4/trump-tweet-generator#readme"
+}
