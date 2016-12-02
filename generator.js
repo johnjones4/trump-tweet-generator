@@ -1,8 +1,11 @@
 const async = require('async');
 const parse = require('csv-parse');
 const fs = require('fs');
+const weighted = require('weighted')
 
 const MaxBaseSize = 4;
+
+var _biGrams = null;
 
 exports.seed = function(done) {
   async.waterfall([
@@ -18,30 +21,44 @@ exports.seed = function(done) {
       sortNextWorks(words);
       next(null,words);
     },
-  ],done);
+  ],function(err,biGrams) {
+    if (err) {
+      done(err);
+    } else {
+      _biGrams = biGrams
+      done(null,biGrams);
+    }
+  });
 }
 
 exports.generate = function(base,biGrams,done) {
+  if (!biGrams) {
+    biGrams = _biGrams;
+  }
   var tweet = base.toLowerCase();
   var lastWord = base.toLowerCase();
-  const wordsUsed = {};
-  while(tweet.length < 140) {
-    if (biGrams[lastWord]) {
-      // if (!wordsUsed[lastWord] && !Number.isInteger(wordsUsed[lastWord])) {
-      //   wordsUsed[lastWord] = 0;
-      // } else {
-      //   wordsUsed[lastWord]++;
-      // }
-      // const index = (wordsUsed[lastWord] % biGrams[lastWord].length);
-      const index = Math.floor(Math.random() * biGrams[lastWord].length);
-      const nextWord = biGrams[lastWord][index].word;
-      tweet += ' ' + nextWord;
-      lastWord = nextWord;
-    } else {
-      break;
+  if (biGrams[lastWord]) {
+    const wordsUsed = {};
+    while(tweet.length < 140) {
+      if (biGrams[lastWord]) {
+        // if (!wordsUsed[lastWord] && !Number.isInteger(wordsUsed[lastWord])) {
+        //   wordsUsed[lastWord] = 0;
+        // } else {
+        //   wordsUsed[lastWord]++;
+        // }
+        // const index = (wordsUsed[lastWord] % biGrams[lastWord].length);
+        // const index = Math.floor(Math.random() * biGrams[lastWord].length);
+        const nextWord = weighted.select(biGrams[lastWord]);
+        tweet += ' ' + nextWord;
+        lastWord = nextWord;
+      } else {
+        break;
+      }
     }
+    done(null,tweet);
+  } else {
+    done(null,null);
   }
-  done(null,tweet);
 }
 
 function getTweetTokens(tweet) {
@@ -49,7 +66,7 @@ function getTweetTokens(tweet) {
     .toLowerCase()
     .split(' ')
     .map(function(uncleanToken) {
-      return uncleanToken.trim().replace(/\b[-.,()&$#!\[\]{}"']+\B|\B[-.,()&$#!\[\]{}"']+\b/g, "").trim();
+      return uncleanToken.trim().replace(/\s/g,'').replace(/\b[-.,()&$#!\[\]{}"']+\B|\B[-.,()&$#!\[\]{}"']+\b/g, "").trim();
     })
     .filter(function(token) {
       return token.length > 0 && token.indexOf('http') != 0;
@@ -79,16 +96,23 @@ function generateBiGrams(tokens,words) {
 
 function sortNextWorks(biGrams) {
   for(var biGram in biGrams) {
-    const nextArray = [];
+    // const nextArray = [];
+    // for(var nextWord in biGrams[biGram]) {
+    //   nextArray.push({
+    //     'word': nextWord,
+    //     'frequency': biGrams[biGram][nextWord]
+    //   });
+    // }
+    // nextArray.sort(function(a,b) {
+    //   return b.frequency - a.frequency;
+    // });
+    // biGrams[biGram] = nextArray;
+    var total = 0;
     for(var nextWord in biGrams[biGram]) {
-      nextArray.push({
-        'word': nextWord,
-        'frequency': biGrams[biGram][nextWord]
-      });
+      total += biGrams[biGram][nextWord];
     }
-    nextArray.sort(function(a,b) {
-      return b.frequency - a.frequency;
-    });
-    biGrams[biGram] = nextArray;
+    for(var nextWord in biGrams[biGram]) {
+      biGrams[biGram][nextWord] = biGrams[biGram][nextWord] / total;
+    }
   }
 }
