@@ -3,7 +3,7 @@ const parse = require('csv-parse');
 const fs = require('fs');
 const weighted = require('weighted')
 
-const MaxBaseSize = 4;
+const MaxBaseSize = 6;
 
 var _biGrams = null;
 
@@ -18,7 +18,7 @@ exports.seed = function(done) {
         const baseTokens = getTweetTokens(tweet);
         generateBiGrams(baseTokens,words);
       });
-      sortNextWorks(words);
+      prepareNextWorks(words);
       next(null,words);
     },
   ],function(err,biGrams) {
@@ -41,13 +41,6 @@ exports.generate = function(base,biGrams,done) {
     const wordsUsed = {};
     while(tweet.length < 140) {
       if (biGrams[lastWord]) {
-        // if (!wordsUsed[lastWord] && !Number.isInteger(wordsUsed[lastWord])) {
-        //   wordsUsed[lastWord] = 0;
-        // } else {
-        //   wordsUsed[lastWord]++;
-        // }
-        // const index = (wordsUsed[lastWord] % biGrams[lastWord].length);
-        // const index = Math.floor(Math.random() * biGrams[lastWord].length);
         const nextWord = weighted.select(biGrams[lastWord]);
         tweet += ' ' + nextWord;
         lastWord = nextWord;
@@ -81,8 +74,8 @@ function generateBiGrams(tokens,words) {
         if (!words[token]) {
           words[token] = {};
         }
-        if (curTokenIndex < tokens.length - 1) {
-          const nextWord = tokens[curTokenIndex + 1];
+        if (curTokenIndex + baseSize < tokens.length) {
+          const nextWord = tokens[curTokenIndex + baseSize];
           if (!words[token][nextWord]) {
             words[token][nextWord] = 1;
           } else {
@@ -94,19 +87,8 @@ function generateBiGrams(tokens,words) {
   }
 }
 
-function sortNextWorks(biGrams) {
+function prepareNextWorks(biGrams) {
   for(var biGram in biGrams) {
-    // const nextArray = [];
-    // for(var nextWord in biGrams[biGram]) {
-    //   nextArray.push({
-    //     'word': nextWord,
-    //     'frequency': biGrams[biGram][nextWord]
-    //   });
-    // }
-    // nextArray.sort(function(a,b) {
-    //   return b.frequency - a.frequency;
-    // });
-    // biGrams[biGram] = nextArray;
     var total = 0;
     for(var nextWord in biGrams[biGram]) {
       total += biGrams[biGram][nextWord];
