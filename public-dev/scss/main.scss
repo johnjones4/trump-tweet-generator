@@ -27,6 +27,7 @@ $width: 1024px;
   @media (max-width: 640px) {
     display: block;
     padding-top: 12px;
+    overflow: scroll;
   }
 }
 
@@ -167,8 +168,8 @@ button {
 .disclaimer {
   color: white;
   font-size: 12px;
-  margin: 12px;
-  max-width: $width;
+  margin: 12px 12px 0 12px;
+  max-width: ($width * 0.75);
   line-height: 1.1em;
   a {
     color: white;
