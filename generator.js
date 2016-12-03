@@ -10,7 +10,7 @@ var _biGrams = null;
 exports.seed = function(done) {
   async.waterfall([
     function(next) {
-      fs.createReadStream('./tweets.csv').pipe(parse({'columns': true},next));
+      fs.createReadStream(__dirname+'/tweets.csv').pipe(parse({'columns': true},next));
     },
     function(tweets,next) {
       const words = {};
