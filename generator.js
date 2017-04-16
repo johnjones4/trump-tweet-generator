@@ -4,6 +4,7 @@ const fs = require('fs');
 const weighted = require('weighted')
 
 const MaxBaseSize = 6;
+const MaxNextTokenSize = 4;
 
 var _biGrams = null;
 
@@ -74,12 +75,15 @@ function generateBiGrams(tokens,words) {
         if (!words[token]) {
           words[token] = {};
         }
-        if (curTokenIndex + baseSize < tokens.length) {
-          const nextWord = tokens[curTokenIndex + baseSize];
-          if (!words[token][nextWord]) {
-            words[token][nextWord] = 1;
-          } else {
-            words[token][nextWord]++;
+        const nextTokenLimit = Math.min(MaxNextTokenSize,tokens.length - 1 - (curTokenIndex + baseSize));
+        if (nextTokenLimit > 0) {
+          for(var nextTokenLength = 1; nextTokenLength < nextTokenLimit; nextTokenLength++) {
+            const nextToken = tokens.slice(curTokenIndex+baseSize,curTokenIndex+baseSize+nextTokenLength).join(' ');
+            if (!words[token][nextToken]) {
+              words[token][nextToken] = 1;
+            } else {
+              words[token][nextToken]++;
+            }
           }
         }
       }
@@ -88,13 +92,21 @@ function generateBiGrams(tokens,words) {
 }
 
 function prepareNextWorks(biGrams) {
+  const deleteGrams = [];
   for(var biGram in biGrams) {
     var total = 0;
     for(var nextWord in biGrams[biGram]) {
       total += biGrams[biGram][nextWord];
     }
-    for(var nextWord in biGrams[biGram]) {
-      biGrams[biGram][nextWord] = biGrams[biGram][nextWord] / total;
+    if (total == 0) {
+      deleteGrams.push(biGram);
+    } else {
+      for(var nextWord in biGrams[biGram]) {
+        biGrams[biGram][nextWord] = biGrams[biGram][nextWord] / total;
+      }
     }
   }
+  deleteGrams.forEach(function(biGram) {
+    delete biGrams[biGram];
+  });
 }
