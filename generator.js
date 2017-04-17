@@ -95,9 +95,17 @@ function prepareNextWorks(biGrams) {
   const deleteGrams = [];
   for(var biGram in biGrams) {
     var total = 0;
+    const deleteNextWords = [];
     for(var nextWord in biGrams[biGram]) {
-      total += biGrams[biGram][nextWord];
+      if (biGrams[biGram][nextWord] > 1) {
+        total += biGrams[biGram][nextWord];
+      } else {
+        deleteNextWords.push(nextWord);
+      }
     }
+    deleteNextWords.forEach(function(nextWord) {
+      delete biGrams[biGram][nextWord];
+    });
     if (total == 0) {
       deleteGrams.push(biGram);
     } else {
